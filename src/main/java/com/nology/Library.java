@@ -9,6 +9,7 @@ import java.io.FileReader;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.*;
+import java.util.stream.Collectors;
 
 public class Library {
 
@@ -103,6 +104,19 @@ public class Library {
         }
     }
 
+    private List<Loan> getActiveLoans () {
+        return loans.stream().filter(o -> !o.getHasBeenReturned()).collect(Collectors.toList());
+    }
+
+    private List<Book> getAvailableBooks () {
+        List<Integer> loanedBookId = new ArrayList<>();
+        for (Loan loan: loans) {
+            if (!loan.getHasBeenReturned()) loanedBookId.add(loan.getBookID());
+        }
+
+        return books.stream().filter(o -> !loanedBookId.contains(o.getNumber())).collect(Collectors.toList());
+    }
+
     private void logIn() {
         Scanner s = new Scanner(System.in);
         Boolean loggedIn = false;
@@ -128,6 +142,13 @@ public class Library {
         }
     }
 
+    public void printLoans() {
+        for (Loan loan: loans) {
+            if (loan.getUserName().equals(user.getName()) || user.getAdmin()) {
+                System.out.println(loan);
+            }
+        }
+    }
     private void useLibrary() {
         Scanner s = new Scanner(System.in);
         int userInput;
@@ -144,7 +165,9 @@ public class Library {
                 System.out.println("3. See Active Loans");
             }
             System.out.println("0. Log Off");
+
             userInput = s.nextInt();
+
             if (userInput == 1) {
                 for (Book book: books) {
                     System.out.println(book);
@@ -152,14 +175,60 @@ public class Library {
             } else if (userInput == 0) {
                 System.out.println("Thank you for using this service =)");
                 inUse = false;
-            } else if (userInput == 2 && !user.getAdmin()) {
-
+            } else if (userInput == 2) {
+                printLoans();
+            } else if (userInput == 3 && !user.getAdmin()) {
+                makeNewLoan();
+            } else if (userInput ==3 && user.getAdmin()) {
+                System.out.println(getActiveLoans());
+            } else if (userInput == 4 && !user.getAdmin()) {
+                returnBook();
             } else {
                 System.out.println("Invalid Input");
             }
         }
     }
 
+    public void makeNewLoan () {
+        Scanner s = new Scanner(System.in);
+        boolean finished = false;
+
+        while(!finished) {
+            System.out.println("These Books are available to Loan:");
+            List<Book> availableBooks = getAvailableBooks();
+            for (Book book : availableBooks) System.out.println(book);
+            System.out.println("Type the Book ID you wish to Loan");
+            System.out.println("Or 999 to return");
+            int response = s.nextInt();
+            if (response == 999) {
+                break;
+            }
+            if (availableBooks.stream().anyMatch(o -> o.getNumber() == response)) {
+                Book bookToLoan = availableBooks.stream().filter(o -> o.getNumber() == response).findFirst().get();
+                System.out.println("Loaning Book:");
+                System.out.println(bookToLoan);
+                loans.add(new Loan(bookToLoan.getNumber(),bookToLoan.getTitle(),user.getName()));
+                saveLoanList(loans);
+                finished = true;
+            }
+        }
+    }
+
+    public void returnBook () {
+        Scanner s = new Scanner(System.in);
+        System.out.println("Your active loans are:");
+        printLoans();
+        System.out.println("Enter the Book Id you wish to return");
+        int response = s.nextInt();
+        Loan loanToEdit = loans.stream()
+                .filter(o -> !o.getHasBeenReturned() && o.getBookID() == response && o.getUserName().equals(user.getName()))
+                .findFirst().get();
+
+        loans.remove(loanToEdit);
+        loanToEdit.setHasBeenReturned(true);
+        loans.add(loanToEdit);
+        saveLoanList(loans);
+    }
 
 
 }

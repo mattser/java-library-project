@@ -79,4 +79,12 @@ public class Loan {
     public void setHasBeenReturned(Boolean hasBeenReturned) {
         this.hasBeenReturned = hasBeenReturned;
     }
+
+    public String toString() {
+        return ((hasBeenReturned) ? "RETURNED" : "OUT") + " [ BookID: " + bookID +
+                " | Book Name: " + bookName +
+                " | Borrower: " + userName +
+                " | Taken Out: " + outDate +
+                " | Due Back: " + dueDate + " ]";
+    }
 }
