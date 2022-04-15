@@ -13,6 +13,9 @@ import java.util.*;
 public class Library {
 
     private final List<Book> books = new ArrayList<>();
+    private final List<User> users = new ArrayList<>();
+    private final List<Loan> loans = new ArrayList<>();
+    private User user;
     private Boolean inUse;
 
     public Library() {
@@ -20,6 +23,9 @@ public class Library {
             books.addAll(loadJsonBooks("src/main/resources/book_list.json"));
         } else loadCSVBooks();
         inUse = true;
+        users.addAll(loadUsers());
+        loans.addAll(loadLoans());
+        logIn();
         useLibrary();
     }
 
@@ -33,6 +39,25 @@ public class Library {
             }
             saveBookList("src/main/resources/book_list.json",books);
 
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    public List<User> loadUsers () {
+        try {
+            ObjectMapper mapper = new ObjectMapper();
+            return mapper.readValue(new File("src/main/resources/users_list.json"), new TypeReference<List<User>>() {});
+        } catch (Exception e) {
+            e.printStackTrace();
+            return new ArrayList<User>();
+        }
+    }
+
+    public void saveUsers (List<User> userList) {
+        try {
+            ObjectMapper mapper = new ObjectMapper();
+            mapper.writeValue(new File("src/main/resources/users_list.json"),userList);
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -59,19 +84,76 @@ public class Library {
         }
     }
 
+    private List<Loan> loadLoans () {
+        try {
+            ObjectMapper mapper = new ObjectMapper();
+            return mapper.readValue(new File("src/main/resources/loan_list.json"), new TypeReference<List<Loan>>() {});
+        } catch (Exception e) {
+            e.printStackTrace();
+            return new ArrayList<Loan>();
+        }
+    }
+
+    private void saveLoanList(List<Loan> loanList) {
+        try {
+            ObjectMapper mapper = new ObjectMapper();
+            mapper.writeValue(new File("src/main/resources/loan_list.json"),loanList);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    private void logIn() {
+        Scanner s = new Scanner(System.in);
+        Boolean loggedIn = false;
+
+        while(!loggedIn) {
+            System.out.println("Enter your user name:");
+            String name = s.next();
+            if (users.stream().noneMatch(o -> o.getName().equals(name))) {
+                System.out.println(name + " does not exist. Would you like to create a new user?");
+                System.out.println("1. Yes");
+                System.out.println("Press Any Key For No.");
+                int response = s.nextInt();
+                if (response == 1) {
+                    user = new User(name);
+                    users.add(user);
+                    saveUsers(users);
+                    loggedIn = true;
+                }
+            } else {
+                user = users.stream().filter(o -> o.getName().equals(name)).findFirst().get();
+                loggedIn = true;
+            }
+        }
+    }
+
     private void useLibrary() {
         Scanner s = new Scanner(System.in);
         int userInput;
         while(inUse) {
+            System.out.println("You are logged in as: " + user.getName());
             System.out.println("Select From the Options Below:");
             System.out.println("1. Show All Books");
+            if (!user.getAdmin()) {
+                System.out.println("2. Check Your Current Loans");
+                System.out.println("3. Loan a Book");
+                System.out.println("4. Return a Book");
+            } else {
+                System.out.println("2. See Loan History");
+                System.out.println("3. See Active Loans");
+            }
             System.out.println("0. Log Off");
             userInput = s.nextInt();
             if (userInput == 1) {
-                System.out.println(books);
+                for (Book book: books) {
+                    System.out.println(book);
+                }
             } else if (userInput == 0) {
                 System.out.println("Thank you for using this service =)");
                 inUse = false;
+            } else if (userInput == 2 && !user.getAdmin()) {
+
             } else {
                 System.out.println("Invalid Input");
             }
