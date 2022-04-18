@@ -3,9 +3,11 @@ package com.nology;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.opencsv.CSVReader;
+import com.opencsv.CSVWriter;
 
 import java.io.File;
 import java.io.FileReader;
+import java.io.FileWriter;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.*;
@@ -163,6 +165,8 @@ public class Library {
             } else {
                 System.out.println("2. See Loan History");
                 System.out.println("3. See Active Loans");
+                System.out.println("4. See Book Popularity");
+                System.out.println("5. Save Loan Reports to CSV File");
             }
             System.out.println("0. Log Off");
 
@@ -183,6 +187,11 @@ public class Library {
                 System.out.println(getActiveLoans());
             } else if (userInput == 4 && !user.getAdmin()) {
                 returnBook();
+            } else if (userInput == 4 && user.getAdmin()) {
+                System.out.println("Book Name = Number of Loans");
+                System.out.println(getBookPopularity());
+            } else if (userInput == 5 && user.getAdmin()) {
+                writeCSVReport();
             } else {
                 System.out.println("Invalid Input");
             }
@@ -212,6 +221,7 @@ public class Library {
                 finished = true;
             }
         }
+        s.close();
     }
 
     public void returnBook () {
@@ -228,6 +238,32 @@ public class Library {
         loanToEdit.setHasBeenReturned(true);
         loans.add(loanToEdit);
         saveLoanList(loans);
+        s.close();
+    }
+
+    public Map<String,Long> getBookPopularity() {
+        return loans.stream().collect(Collectors.groupingBy(Loan::getBookName, Collectors.counting()));
+    }
+
+    public void writeCSVReport() {
+        try {
+            CSVWriter writer = new CSVWriter(new FileWriter(new File("src/main/resources/report.csv")));
+            writer.writeNext(new String [] {"BookID","Book Name", "User Name", "Date Taken Out", "Due Date", "Returned"});
+
+            for (Loan loan: loans) {
+                writer.writeNext(new String[] {"" + loan.getBookID(),
+                        loan.getBookName(),
+                        loan.getUserName(),
+                        "" + loan.getOutDate(),
+                        "" + loan.getDueDate(),
+                        "" + loan.getHasBeenReturned()});
+            }
+            writer.close();
+            System.out.println("Report Written");
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 
 
