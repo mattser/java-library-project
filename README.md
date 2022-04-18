@@ -24,5 +24,16 @@ Specifications
 * Users can make accounts (sign in with new name)
 * Users cannot use admin priviliges
 
+Screenshots
+===========
+
+Admin Login Example
+
+![Admin Login Example](screenshots/adminlogin.png)
+
+User Login Example, and loan report
+
+![User Login Example](screenshots/userlogin.png)
+
 
 
