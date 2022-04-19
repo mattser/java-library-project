@@ -21,7 +21,8 @@ public class Library {
     private User user;
     private Boolean inUse;
 
-    public Library() {
+    public Library(IBookRepository mapper) {
+        this.books.addAll(mapper.mapDataToBooks());
         if (Files.exists(Paths.get("src/main/resources/book_list.json"))) {
             books.addAll(loadJsonBooks("src/main/resources/book_list.json"));
         } else loadCSVBooks();
@@ -113,7 +114,7 @@ public class Library {
     private List<Book> getAvailableBooks () {
         List<Integer> loanedBookId = new ArrayList<>();
         for (Loan loan: loans) {
-            if (!loan.getHasBeenReturned()) loanedBookId.add(loan.getBookID());
+            if (!loan.getHasBeenReturned()) loanedBookId.add(loan.getBosokID());
         }
 
         return books.stream().filter(o -> !loanedBookId.contains(o.getNumber())).collect(Collectors.toList());
